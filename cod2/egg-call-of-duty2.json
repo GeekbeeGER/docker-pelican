@@ -1,17 +1,11 @@
 {
-    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY FOR PELICAN PANEL - CALL OF DUTY 2",
-    "meta": {
-        "version": "PTDL_v2",
-        "update_url": null
-    },
-    "exported_at": "2024-10-31T12:45:00+00:00",
     "name": "Call of Duty 2",
-    "author": "user-request@adapter",
-    "uuid": "a1b2c3d4-e5f6-7890-a1b2-c3d4e5f67890",
+    "author": "pelican-community@example.com",
+    "uuid": "c4e9f7d8-1b2c-4a5f-b6d7-e8f9g0h1i2j3",
     "description": "Ein dedizierter Server für Call of Duty 2 für das Pelican Panel. Verwendet die native Linux-Version und installiert alle Abhängigkeiten automatisch.",
     "features": [],
     "docker_images": {
-        "Debian 12": "debian:bookworm-slim"
+        "Debian (Pterodactyl Yolk)": "ghcr.io/pterodactyl/yolks:debian"
     },
     "file_denylist": [],
     "startup": "./cod2_lnxded_1.3 +set dedicated 2 +set net_ip 0.0.0.0 +set net_port {{SERVER_PORT}} +set sv_hostname \"{{SERVER_HOSTNAME}}\" +set sv_maxclients {{MAX_PLAYERS}} +set g_gametype {{GAMETYPE}} +set g_password \"{{SERVER_PASSWORD}}\" +map {{STARTUP_MAP}} +exec server.cfg",
@@ -23,8 +17,8 @@
     },
     "scripts": {
         "installation": {
-            "script": "#!/bin/bash\n# Pelican Panel - Call of Duty 2 Installation Script\n\n# Füge i386-Architektur für 32-Bit-Anwendungen hinzu\ndpkg --add-architecture i386\n\napt-get update -y\n\necho \"-----------------------------------------\"\necho \"Installiere Abhängigkeiten... (wget, xz, 32-bit libs)\"\necho \"-----------------------------------------\"\napt-get install -y --no-install-recommends wget xz-utils lib32gcc-s1 ca-certificates\n\nif [ ! -d /mnt/server ]; then\n    mkdir -p /mnt/server/\nfi\n\ncd /mnt/server/\n\necho \"-----------------------------------------\"\necho \"Lade Call of Duty 2 Server herunter...\"\necho \"-----------------------------------------\"\n\nwget -qO server.tar.xz \"${DOWNLOAD_URL}\"\n\n\necho \"-----------------------------------------\"\necho \"Entpacke Server-Dateien...\"\necho \"-----------------------------------------\"\n# --strip-components=1 entfernt das übergeordnete Verzeichnis aus dem Archiv\ntar -xf server.tar.xz --strip-components=1\n\nrm server.tar.xz\n\n# Setze Ausführungsrechte für die Server-Binary\nchmod +x ./cod2_lnxded_1.3\n\necho \"-----------------------------------------\"\necho \"Installation abgeschlossen.\"\necho \"-----------------------------------------\"",
-            "container": "debian:bookworm-slim",
+            "script": "#!/bin/bash\n# Pelican Panel - Call of Duty 2 Installation Script\n\n# Füge i386-Architektur für 32-Bit-Anwendungen hinzu\ndpkg --add-architecture i386\napt-get update -y\n\necho \"-----------------------------------------\"\necho \"Installiere Abhängigkeiten... (wget, xz, 32-bit libs)\"\necho \"-----------------------------------------\"\napt-get install -y --no-install-recommends wget xz-utils lib32gcc-s1 ca-certificates\n\nmkdir -p /mnt/server\ncd /mnt/server\n\necho \"-----------------------------------------\"\necho \"Lade Call of Duty 2 Server herunter...\"\necho \"-----------------------------------------\"\nwget -qO server.tar.xz \"${DOWNLOAD_URL}\"\n\necho \"-----------------------------------------\"\necho \"Entpacke Server-Dateien...\"\necho \"-----------------------------------------\"\ntar -xf server.tar.xz --strip-components=1\n\nrm server.tar.xz\n\nchmod +x ./cod2_lnxded_1.3\n\necho \"-----------------------------------------\"\necho \"Installation abgeschlossen.\"\necho \"-----------------------------------------\"",
+            "container": "ghcr.io/pterodactyl/yolks:debian",
             "entrypoint": "bash"
         }
     },
