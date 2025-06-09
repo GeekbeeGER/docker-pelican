@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  cod2-server:
+    # Baut das Image aus dem aktuellen Verzeichnis
+    build: .
+    container_name: cod2_server
+    restart: unless-stopped
+    
+    # Ports: <Host-Port>:<Container-Port>
+    ports:
+      - "28960:28960/udp"
+      
+    # Volumes: <Host-Verzeichnis>:<Container-Verzeichnis>
+    # Hier wird deine server.cfg und eigene Maps/Mods gespeichert
+    volumes:
+      - ./cod2-main:/home/cod2server/server/main
+      
+    # Umgebungsvariablen zur Konfiguration des Servers
+    # Ändere diese Werte nach deinen Wünschen
+    environment:
+      # Der Name deines Servers, wie er im Server-Browser angezeigt wird
+      - HOSTNAME=Mein CoD2 Docker Server
+      # Der Spielmodus (z.B. dm, tdm, ctf, sd)
+      - GAMETYPE=tdm
+      # Die Start-Map (z.B. mp_carentan, mp_toujane)
+      - MAP=mp_carentan
+      # Maximale Anzahl an Spielern
+      - MAX_CLIENTS=16
+      # Passwort für den Server (leer lassen für einen öffentlichen Server)
+      - PASSWORD=
+      # Anzahl der reservierten privaten Slots
+      - PRIVATE_CLIENTS=0
