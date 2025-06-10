@@ -2,6 +2,7 @@
 set -e
 cd /home/container
 
+# Installationslogik (bleibt unverändert)
 if [ ! -f "cod2_lnxded" ]; then
     echo "COD2-Dateien nicht gefunden. Starte Download..."
     wget -q -O cod2-server.tar.xz "http://linuxgsm.download/CallOfDuty2/cod2-lnxded-1.3-full.tar.xz"
@@ -13,10 +14,7 @@ else
     echo "Dateien bereits vorhanden."
 fi
 
-PARSED_STARTUP=$(echo "${STARTUP}" | \
-    sed -e "s/{{server.ip}}/${SERVER_IP}/g" \
-    -e "s/{{server.port}}/${SERVER_PORT}/g" \
-    -e "s/{{server.env.SERVER_CFG}}/${SERVER_CFG}/g")
-
-echo "Finaler Befehl: ${PARSED_STARTUP}"
-exec ${PARSED_STARTUP}
+# Führe den vom Panel übergebenen Befehl direkt aus.
+# Das Panel selbst wird die Variablen ersetzen.
+echo "Führe Befehl vom Panel aus: $@"
+exec "$@"
