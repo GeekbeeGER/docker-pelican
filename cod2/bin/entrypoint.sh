@@ -1,20 +1,38 @@
 #!/bin/bash
-cd /home/container
 
-## with the help of https://github.com/pelican-eggs/yolks/blob/master/wine/entrypoint.sh (many thanks!)
+# Wechsle in das Home-Verzeichnis
+cd /home/container || exit 1
 
-# info output
-echo "Running on:"
-echo "$(cat /etc/debian_version)"
-echo "Current timezone: $(cat /etc/timezone)"
+# --- Installationslogik ---
+# Prüfe, ob die Server-Executable bereits existiert.
+if [ ! -f "cod2_lnxded" ]; then
+    echo "--------------------------------------------------"
+    echo "Call of Duty 2 Serverdateien nicht gefunden."
+    echo "Starte den einmaligen Download und die Installation..."
+    echo "--------------------------------------------------"
 
-# Make internal Docker IP address available to processes.
-INTERNAL_IP=$(ip route get 1 | awk '{print $(NF-2);exit}')
-export INTERNAL_IP
+    # Lade die Serverdateien von linuxgsm.download herunter
+    wget -q -O cod2-server.tar.xz "http://linuxgsm.download/CallOfDuty2/cod2-lnxded-1.3-full.tar.xz"
 
-# Replace Startup Variables
-MODIFIED_STARTUP=$(echo -e ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')
-echo -e "running: ${MODIFIED_STARTUP}"
+    # Entpacke das Archiv
+    tar -xf cod2-server.tar.xz
 
-# Run the Server
-bash -c "${MODIFIED_STARTUP}"
+    # Lösche das heruntergeladene Archiv, um Platz zu sparen
+    rm cod2-server.tar.xz
+
+    # Mache die Server-Executable ausführbar
+    chmod +x ./cod2_lnxded
+
+    echo "--------------------------------------------------"
+    echo "Installation abgeschlossen!"
+    echo "--------------------------------------------------"
+else
+    echo "Serverdateien bereits vorhanden, überspringe Installation."
+fi
+
+# --- Server-Startlogik ---
+# Führe den Befehl aus, der vom Pelican Panel übergeben wurde.
+# "$@" enthält den kompletten "Startup Command" aus dem Panel.
+echo "Starte den Server mit folgendem Befehl:"
+echo "exec $@"
+exec "$@"
