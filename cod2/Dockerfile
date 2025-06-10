@@ -22,9 +22,12 @@ RUN \
 # Setze das Arbeitsverzeichnis auf das Home-Verzeichnis des neuen Benutzers
 WORKDIR /home/container
 
-# Kopiere das Entrypoint-Skript und setze NUR dessen Rechte
+# Kopiere das Entrypoint-Skript
 COPY bin/entrypoint.sh /entrypoint.sh
-RUN chown container:container /entrypoint.sh && chmod +x /entrypoint.sh
+
+# ---> HIER IST DER ENTSCHEIDENDE BEFEHL <---
+# Setze die Rechte auf das Skript UND das gesamte Home-Verzeichnis rekursiv.
+RUN chown -R container:container /home/container && chmod +x /entrypoint.sh
 
 # Wechsle zum unprivilegierten Benutzer
 USER container
