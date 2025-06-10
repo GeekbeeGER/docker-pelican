@@ -1,36 +1,22 @@
-# STAGE 1: Basis-Setup und Abhängigkeiten
-FROM --platform=$TARGETOS/$TARGETARCH i386/debian:bookworm-slim
+#!/bin/bash
+set -e
+cd /home/container
 
-LABEL author="Geekbee" maintainer="support@bawialnia.biz"
+if [ ! -f "cod2_lnxded" ]; then
+    echo "COD2-Dateien nicht gefunden. Starte Download..."
+    wget -q -O cod2-server.tar.xz "http://linuxgsm.download/CallOfDuty2/cod2-lnxded-1.3-full.tar.xz"
+    tar -xf cod2-server.tar.xz
+    rm cod2-server.tar.xz
+    chmod +x ./cod2_lnxded
+    echo "Installation abgeschlossen."
+else
+    echo "Dateien bereits vorhanden."
+fi
 
-ENV USER=container \
-    HOME=/home/container \
-    DEBIAN_FRONTEND=noninteractive
+PARSED_STARTUP=$(echo "${STARTUP}" | \
+    sed -e "s/{{server.ip}}/${SERVER_IP}/g" \
+    -e "s/{{server.port}}/${SERVER_PORT}/g" \
+    -e "s/{{server.env.SERVER_CFG}}/${SERVER_CFG}/g")
 
-# Führe ALLE Shell-Befehle innerhalb EINER RUN-Anweisung aus.
-RUN apt-get update && \
-    dpkg --add-architecture i386 && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-        wget \
-        tar \
-        xz-utils \
-        libgcc-s1 \
-        libstdc++6 \
-        libstdc++5 && \
-    # useradd ist ein Shell-Befehl, daher muss er hier stehen.
-    useradd -m -d ${HOME} -s /bin/bash ${USER} && \
-    # Räume den Apt-Cache auf.
-    rm -rf /var/lib/apt/lists/*
-
-# STAGE 2: Finale Konfiguration
-USER ${USER}
-WORKDIR ${HOME}
-
-# Kopiere das Entrypoint-Skript.
-COPY --chown=container:container ./bin/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-ENTRYPOINT [ "/entrypoint.sh" ]
-
-CMD ["/bin/bash"]
+echo "Finaler Befehl: ${PARSED_STARTUP}"
+exec ${PARSED_STARTUP}
