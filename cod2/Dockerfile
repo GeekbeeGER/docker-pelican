@@ -1,30 +1,33 @@
-#!/bin/bash
-set -e
+# STAGE 1: Basis-Setup und Abhängigkeiten
+FROM --platform=$TARGETOS/$TARGETARCH i386/debian:bookworm-slim
 
-cd /home/container
+LABEL author="Geekbee" maintainer="support@bawialnia.biz"
 
-# Installationslogik...
-if [ ! -f "cod2_lnxded" ]; then
-    echo "COD2-Dateien nicht gefunden. Lade herunter..."
-    wget -q -O cod2-server.tar.xz "http://linuxgsm.download/CallOfDuty2/cod2-lnxded-1.3-full.tar.xz"
-    tar -xf cod2-server.tar.xz
-    rm cod2-server.tar.xz
-    chmod +x ./cod2_lnxded
-    echo "Installation abgeschlossen."
-else
-    echo "COD2-Dateien bereits vorhanden."
-fi
+ENV USER=container \
+    HOME=/home/container \
+    DEBIAN_FRONTEND=noninteractive
 
-# Ersetze die Panel-Variablen im Startbefehl.
-# Pelican übergibt den Startup Command als Umgebungsvariable $STARTUP
-# Aber die Variablen {{server.ip}} etc. sind noch nicht ersetzt. Das machen wir hier manuell.
-PARSED_STARTUP=$(echo "${STARTUP}" | \
-    sed -e "s/{{server.ip}}/${SERVER_IP}/g" \
-    -e "s/{{server.port}}/${SERVER_PORT}/g" \
-    -e "s/{{server.env.SERVER_CFG}}/${SERVER_CFG}/g")
+RUN apt-get update && \
+    dpkg --add-architecture i386 && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        wget \
+        tar \
+        xz-utils \
+        libgcc-s1 \
+        libstdc++6 && \
+    useradd -m -d ${HOME} -s /bin/bash ${USER} && \
+    rm -rf /var/lib/apt/lists/*
 
-# Gib den finalen, geparsten Befehl aus
-echo "Finaler Startbefehl: ${PARSED_STARTUP}"
+# STAGE 2: Finale Konfiguration
+USER ${USER}
+WORKDIR ${HOME}
 
-# Führe den Befehl aus
-exec ${PARSED_STARTUP}
+# Kopiere NUR das Entrypoint-Skript.
+# Die Spieldateien werden von diesem Skript selbst heruntergeladen.
+COPY --chown=container:container ./bin/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT [ "/entrypoint.sh" ]
+
+CMD ["/bin/bash"]
