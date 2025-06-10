@@ -29,9 +29,5 @@ RUN chown container:container /entrypoint.sh && chmod +x /entrypoint.sh
 # Wechsle zum unprivilegierten Benutzer
 USER container
 
-# WICHTIGE ÄNDERUNG: Wir setzen den Entrypoint auf /bin/bash
-# und übergeben unser Skript als ersten Befehl.
-ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
-
-# CMD wird jetzt an unser Skript übergeben
-CMD ["/bin/bash", "-c", "echo 'Kein Startbefehl vom Panel erhalten.'"]
+# Setze den Entrypoint, der beim Start des Containers ausgeführt wird
+ENTRYPOINT ["/entrypoint.sh"]
