@@ -1,5 +1,5 @@
 # Dateipfad: .github/workflows/build-cod2.yml
-# Dies ist die korrigierte Version, die den 'uses'/'run'-Konflikt behebt.
+# Finale Version zur Erstellung von ghcr.io/geekbeeger/docker-pelican-cod2:latest
 
 name: 'Build and Push CoD2 Runtime Image'
 
@@ -9,8 +9,10 @@ on:
   workflow_dispatch:
 
 env:
+  # Die zu verwendende Container-Registry
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  # Wir legen den Namen des Images explizit fest, anstatt ihn vom Repo-Namen abzuleiten.
+  IMAGE_NAME: geekbeeger/docker-pelican-cod2
 
 jobs:
   build-and-push-cod2:
@@ -20,11 +22,9 @@ jobs:
       packages: write
 
     steps:
-      # Schritt 1: Verwendet NUR 'uses'
       - name: 'Checkout Source Code'
         uses: actions/checkout@v4
 
-      # Schritt 2: Verwendet NUR 'uses'
       - name: 'Login to GitHub Container Registry'
         uses: docker/login-action@v3
         with:
@@ -32,15 +32,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Schritt 3: Verwendet NUR 'uses'
+      # HIER IST DIE WICHTIGE ÄNDERUNG FÜR DEN TAG:
+      # Wir weisen die Action an, den Tag 'latest' zu verwenden, wenn auf 'main' gepusht wird.
       - name: 'Extract metadata for Docker'
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
-      # Schritt 4: Verwendet NUR 'uses' - Hier war wahrscheinlich der Fehler.
-      # Dieser Block ist jetzt korrekt und enthält keine 'run'-Zeile.
+      # Der Build-Schritt bleibt ansonsten unverändert
       - name: 'Build and Push Docker Image'
         uses: docker/build-push-action@v5
         with:
