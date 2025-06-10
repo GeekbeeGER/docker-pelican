@@ -24,7 +24,6 @@ USER ${USER}
 WORKDIR ${HOME}
 
 # Kopiere NUR das Entrypoint-Skript.
-# Die Spieldateien werden von diesem Skript selbst heruntergeladen.
 COPY --chown=container:container ./bin/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
