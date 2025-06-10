@@ -1,33 +1,33 @@
-# STAGE 1: Basis-Setup und Abhängigkeiten
-FROM --platform=$TARGETOS/$TARGETARCH i386/debian:bookworm-slim
+# VERWENDE DEBIAN BUSTER, da es libstdc++5 garantiert enthält.
+FROM i386/debian:buster-slim
 
-LABEL author="Geekbee" maintainer="support@bawialnia.biz"
+# Setze Umgebungsvariablen
+ENV DEBIAN_FRONTEND=noninteractive
 
-ENV USER=container \
-    HOME=/home/container \
-    DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && \
-    dpkg --add-architecture i386 && \
+# Führe alle System-Operationen in einer einzigen, sauberen RUN-Anweisung aus
+RUN \
+    # 1. Update Paketlisten
     apt-get update && \
+    # 2. Installiere alle Abhängigkeiten
     apt-get install -y --no-install-recommends \
         wget \
         tar \
         xz-utils \
-        libgcc-s1 \
-        libstdc++6 \
-        libstdc++5 && \   # <-- HIER IST DIE WICHTIGE HINZUFÜGUNG
-    useradd -m -d ${HOME} -s /bin/bash ${USER} && \
+        libstdc++5 && \
+    # 3. Erstelle den Benutzer 'container'
+    useradd --system --home /home/container --shell /bin/bash container && \
+    # 4. Räume den Cache auf
     rm -rf /var/lib/apt/lists/*
 
-# STAGE 2: Finale Konfiguration
-USER ${USER}
-WORKDIR ${HOME}
+# Setze das Arbeitsverzeichnis auf das Home-Verzeichnis des neuen Benutzers
+WORKDIR /home/container
 
-# Kopiere NUR das Entrypoint-Skript.
-COPY --chown=container:container ./bin/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Kopiere das Entrypoint-Skript und setze die Rechte
+COPY bin/entrypoint.sh /entrypoint.sh
+RUN chown container:container /entrypoint.sh && chmod +x /entrypoint.sh
 
-ENTRYPOINT [ "/entrypoint.sh" ]
+# Wechsle zum unprivilegierten Benutzer
+USER container
 
-CMD ["/bin/bash"]
+# Setze den Entrypoint, der beim Start des Containers ausgeführt wird
+ENTRYPOINT ["/entrypoint.sh"]
