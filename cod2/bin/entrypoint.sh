@@ -1,38 +1,33 @@
-#!/bin/bash
+# STAGE 1: Basis-Setup und Abhängigkeiten
+FROM --platform=$TARGETOS/$TARGETARCH i386/debian:bookworm-slim
 
-# Wechsle in das Home-Verzeichnis
-cd /home/container || exit 1
+LABEL author="Geekbee" maintainer="support@bawialnia.biz"
 
-# --- Installationslogik ---
-# Prüfe, ob die Server-Executable bereits existiert.
-if [ ! -f "cod2_lnxded" ]; then
-    echo "--------------------------------------------------"
-    echo "Call of Duty 2 Serverdateien nicht gefunden."
-    echo "Starte den einmaligen Download und die Installation..."
-    echo "--------------------------------------------------"
+ENV USER=container \
+    HOME=/home/container \
+    DEBIAN_FRONTEND=noninteractive
 
-    # Lade die Serverdateien von linuxgsm.download herunter
-    wget -q -O cod2-server.tar.xz "http://linuxgsm.download/CallOfDuty2/cod2-lnxded-1.3-full.tar.xz"
+RUN apt-get update && \
+    dpkg --add-architecture i386 && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        wget \
+        tar \
+        xz-utils \
+        libgcc-s1 \
+        libstdc++6 && \
+    useradd -m -d ${HOME} -s /bin/bash ${USER} && \
+    rm -rf /var/lib/apt/lists/*
 
-    # Entpacke das Archiv
-    tar -xf cod2-server.tar.xz
+# STAGE 2: Finale Konfiguration
+USER ${USER}
+WORKDIR ${HOME}
 
-    # Lösche das heruntergeladene Archiv, um Platz zu sparen
-    rm cod2-server.tar.xz
+# Kopiere NUR das Entrypoint-Skript.
+# Die Spieldateien werden von diesem Skript selbst heruntergeladen.
+COPY --chown=container:container ./bin/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-    # Mache die Server-Executable ausführbar
-    chmod +x ./cod2_lnxded
+ENTRYPOINT [ "/entrypoint.sh" ]
 
-    echo "--------------------------------------------------"
-    echo "Installation abgeschlossen!"
-    echo "--------------------------------------------------"
-else
-    echo "Serverdateien bereits vorhanden, überspringe Installation."
-fi
-
-# --- Server-Startlogik ---
-# Führe den Befehl aus, der vom Pelican Panel übergeben wurde.
-# "$@" enthält den kompletten "Startup Command" aus dem Panel.
-echo "Starte den Server mit folgendem Befehl:"
-echo "exec $@"
-exec "$@"
+CMD ["/bin/bash"]
