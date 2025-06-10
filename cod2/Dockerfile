@@ -1,15 +1,19 @@
 # ------------------------------------------------------------------
 #  STAGE 1: Basis-Setup und Abhängigkeiten
 # ------------------------------------------------------------------
+# Wir verwenden ein sauberes i386-Image.
 FROM --platform=$TARGETOS/$TARGETARCH i386/debian:bookworm-slim
 
+# Metadaten
 LABEL author="Geekbee" maintainer="support@bawialnia.biz"
-LABEL org.opencontainers.image.licenses=GPLv3
 
+# Umgebungsvariablen
 ENV USER=container \
     HOME=/home/container \
     DEBIAN_FRONTEND=noninteractive
 
+# Installiere NUR die Werkzeuge, die für den Download und den Betrieb nötig sind.
+# KEINE Spieldateien werden hier kopiert.
 RUN apt-get update && \
     dpkg --add-architecture i386 && \
     apt-get update && \
@@ -18,37 +22,26 @@ RUN apt-get update && \
         tar \
         xz-utils \
         libgcc-s1 \
-        libstdc++6 \
-        locales \
-        tzdata && \
-    echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
-    locale-gen en_US.UTF-8 && \
-    update-locale LANG=en_US.UTF-8 && \
+        libstdc++6 && \
+    # Erstelle den unprivilegierten Benutzer
     useradd -m -d ${HOME} -s /bin/bash ${USER} && \
+    # Räume den Apt-Cache auf
     rm -rf /var/lib/apt/lists/*
 
 # ------------------------------------------------------------------
-#  STAGE 2: Installation der Call of Duty 2 Serverdateien
+#  STAGE 2: Entrypoint und finale Konfiguration
 # ------------------------------------------------------------------
+# Wechsle zum unprivilegierten Benutzer.
+USER ${USER}
 WORKDIR ${HOME}
 
-# --- HIER IST DIE WICHTIGSTE ÄNDERUNG ---
-# Wir kopieren den Inhalt eines bestimmten Quellordners anstatt des ganzen Kontexts.
-# ANNAHME: Alle deine CoD2-Serverdateien liegen in einem Unterordner namens 'serverfiles'.
-# Der Befehl kopiert den *Inhalt* von 'serverfiles' nach '/home/container'.
-COPY --chown=container:container serverfiles/ .
-
-# Mache die Server-Executable ausführbar.
-# Dieser Befehl sollte jetzt funktionieren, da die Datei nun am richtigen Ort ist.
-RUN chmod +x ./cod2_lnxded
-
-# ------------------------------------------------------------------
-#  STAGE 3: Finale Konfiguration und Entrypoint
-# ------------------------------------------------------------------
-USER ${USER}
-
+# Kopiere das Entrypoint-Skript. Dieses Skript wird die MAGIE vollbringen.
+# ANNAHME: Das Skript liegt im Unterordner 'bin' deines Projekts.
 COPY --chown=container:container ./bin/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# Setze den Entrypoint.
 ENTRYPOINT [ "/entrypoint.sh" ]
 
-CMD ["./cod2_lnxded"]
+# Der CMD-Befehl wird vom Panel überschrieben.
+CMD ["/bin/bash"]
