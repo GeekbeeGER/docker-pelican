@@ -10,12 +10,9 @@ ENV USER=container \
     HOME=/home/container \
     DEBIAN_FRONTEND=noninteractive
 
-# --- System-Setup und Paketinstallation in einem optimierten Schritt ---
+# --- System-Setup und Paketinstallation ---
 RUN \
-    # 1. Paketlisten aktualisieren
     apt-get update && \
-    \
-    # 2. Notwendige Pakete installieren
     apt-get install --no-install-recommends -y \
         wget \
         tar \
@@ -25,27 +22,23 @@ RUN \
         net-tools \
         tzdata \
         locales && \
-    \
-    # 3. Spracheinstellungen konfigurieren
     update-locale lang=en_US.UTF-8 && \
     dpkg-reconfigure --frontend noninteractive locales && \
-    \
-    # 4. Nicht-privilegierten Benutzer erstellen
     useradd -m -d /home/container -s /bin/bash container && \
-    \
-    # 5. APT-Cache im selben Layer löschen, um die Image-Größe zu reduzieren
     rm -rf /var/lib/apt/lists/*
 
-# Wechsel zum neu erstellten Benutzer
-USER ${USER}
-
-# Arbeitsverzeichnis festlegen (erstellt den Ordner, falls nicht vorhanden)
-WORKDIR ${HOME}
-
-# Kopiere das Startskript und setze die Rechte
+# --- Vorbereitung des Entrypoint-Skripts (als ROOT) ---
 # Annahme: entrypoint.sh liegt im Ordner 'bin' im selben Verzeichnis wie die Dockerfile
 COPY ./bin/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Führe chmod und chown als ROOT aus, bevor wir den Benutzer wechseln.
+RUN chmod +x /entrypoint.sh && chown ${USER}:${USER} /entrypoint.sh
+
+# --- Wechsel zum unprivilegierten Benutzer ---
+# Jetzt ist alles vorbereitet, und wir können sicher zum 'container'-Benutzer wechseln.
+USER ${USER}
+
+# Arbeitsverzeichnis festlegen
+WORKDIR ${HOME}
 
 # Standardbefehl beim Starten des Containers
 CMD [ "/entrypoint.sh" ]
