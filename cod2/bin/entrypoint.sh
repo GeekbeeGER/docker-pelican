@@ -1,4 +1,5 @@
-# STAGE 1: Basis-Setup und Abhängigkeiten
+#!/bin/bash
+#STAGE 1: Basis-Setup und Abhängigkeiten
 FROM --platform=$TARGETOS/$TARGETARCH i386/debian:bookworm-slim
 
 LABEL author="Geekbee" maintainer="support@bawialnia.biz"
