@@ -15,7 +15,8 @@ RUN apt-get update && \
         tar \
         xz-utils \
         libgcc-s1 \
-        libstdc++6 && \
+        libstdc++6 \
+        libstdc++5 && \   # <-- HIER IST DIE WICHTIGE HINZUFÜGUNG
     useradd -m -d ${HOME} -s /bin/bash ${USER} && \
     rm -rf /var/lib/apt/lists/*
 
