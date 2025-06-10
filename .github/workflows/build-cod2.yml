@@ -1,0 +1,65 @@
+# Dateiname: .github/workflows/build-and-push.yml
+
+# Angepasster Name, wie von dir inspiriert
+name: 'Pelican CoD2 Image to GHCR'
+
+# Der Workflow wird bei jedem Push auf den 'main'-Branch oder manuell gestartet
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+# Umgebungsvariablen machen den Workflow sauberer
+env:
+  # Die Registry ist die GitHub Container Registry
+  REGISTRY: ghcr.io
+  # Der Image-Name wird dynamisch aus deinem Repository-Namen erstellt.
+  # Wenn dein Repo 'GeekbeeGER/docker-pelican-cod2' heißt, wird dies zu
+  # ghcr.io/GeekbeeGER/docker-pelican-cod2
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push-cod2: # Job-Name angepasst
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Erlaubnis zum Pushen in die GitHub Packages/Registry
+
+    steps:
+      # Schritt 1: Code aus dem Repository herunterladen
+      - name: 'Checkout Source Code'
+        uses: actions/checkout@v4
+
+      # Schritt 2: An der GitHub Container Registry anmelden (mit der neuesten Action)
+      - name: 'Login to GitHub Container Registry'
+        uses: docker/login-action@v3 # v3 ist die aktuelle Version
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }} # Dynamischer Benutzername
+          password: ${{ secrets.GITHUB_TOKEN }} # Sicheres, automatisches Token
+
+      # Schritt 3: Metadaten wie Tags und Labels automatisch generieren
+      - name: 'Extract metadata for Docker'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      # Schritt 4: Docker-Image mit CoD2-spezifischen Argumenten bauen und pushen
+      # Dies ersetzt die manuellen 'docker build' und 'docker push' Befehle
+      - name: 'Build and Push Docker Image'
+        uses: docker/build-push-action@v5
+        with:
+          context: . # Sagt, dass das Dockerfile im Hauptverzeichnis liegt
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Hier werden die spezifischen Daten für CoD2 übergeben
+          build-args: |
+            DL_URL=https://archive.org/download/cod2-linux-server/
+            DL_FILE=cod2-linux-1.3.tar.bz2
+            SERVER_BINARY=cod2_lnxded
+          build-args: |
+            DL_URL=http://linuxgsm.download/CallOfDuty2/cod2-lnxded-1.3-full.tar.xz
+            DL_FILE=cod2-lnxded-1.3-full.tar.xz
+            SERVER_BINARY=cod2_lnxded
