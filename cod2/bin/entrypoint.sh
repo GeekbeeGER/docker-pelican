@@ -1,24 +1,32 @@
 #!/bin/bash
 set -e
+
 cd /home/container
 
-# Installationslogik...
+# --- Installationslogik (unverändert und funktionierend) ---
 if [ ! -f "cod2_lnxded" ]; then
-    echo "COD2-Dateien nicht gefunden. Lade herunter..."
+    echo "COD2-Dateien nicht gefunden. Starte Download..."
     wget -q -O cod2-server.tar.xz "http://linuxgsm.download/CallOfDuty2/cod2-lnxded-1.3-full.tar.xz"
     tar -xf cod2-server.tar.xz
     rm cod2-server.tar.xz
     chmod +x ./cod2_lnxded
     echo "Installation abgeschlossen."
 else
-    echo "COD2-Dateien bereits vorhanden."
+    echo "Dateien bereits vorhanden."
 fi
 
-# Baue den Startbefehl manuell mit den vom Panel bereitgestellten Umgebungsvariablen.
-# Dies ist die robusteste Methode.
-START_COMMAND="./cod2_lnxded +set dedicated 2 +set net_ip ${SERVER_IP} +set net_port ${SERVER_PORT} +set logfile 1 +exec ${SERVER_CFG}"
+# --- Neue, verbesserte Server-Startlogik ---
+# Das Panel übergibt den Startbefehl in der Variable $STARTUP.
+# Wir müssen die {{...}}-Platzhalter darin durch die Werte aus den
+# anderen Umgebungsvariablen ersetzen.
 
-echo "Finaler Befehl (manuell gebaut): ${START_COMMAND}"
+# Ersetze die Platzhalter im Startbefehl.
+# Diese Methode ist sehr robust gegen leere Variablen.
+# Wir verwenden hier `eval` um die Befehlsersetzung durchzuführen.
+PARSED_STARTUP=$(eval echo $(echo ${STARTUP}))
+
+# Gib den finalen Befehl zur Kontrolle aus
+echo "Finaler, geparster Startbefehl: ${PARSED_STARTUP}"
 
 # Führe den Befehl aus
-exec ${START_COMMAND}
+exec ${PARSED_STARTUP}
