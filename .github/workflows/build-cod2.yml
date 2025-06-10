@@ -1,0 +1,64 @@
+# Dateipfad: .github/workflows/build-cod2.yml
+
+name: 'Build and Push Pelican CoD2 Image'
+
+# Trigger: Startet bei Push auf den main-Branch oder manuell
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+# Umgebungsvariablen für den gesamten Job
+env:
+  # Die zu verwendende Container-Registry
+  REGISTRY: ghcr.io
+  # Der Name des Images, basierend auf dem Repository-Namen
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push-cod2:
+    # Maschine, auf der der Job läuft
+    runs-on: ubuntu-latest
+
+    # Notwendige Berechtigungen, um in die GitHub Container Registry zu pushen
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # 1. Den Quellcode aus dem Repository herunterladen
+      - name: 'Checkout Source Code'
+        uses: actions/checkout@v4
+
+      # 2. An der GitHub Container Registry anmelden
+      - name: 'Login to GitHub Container Registry'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 3. Metadaten (wie Tags und Labels) für das Docker-Image automatisch generieren
+      - name: 'Extract metadata for Docker'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      # 4. Das Docker-Image bauen und in die Registry hochladen
+      - name: 'Build and Push Docker Image'
+        uses: docker/build-push-action@v5
+        with:
+          # Der Kontext zeigt auf den Unterordner, in dem die Dockerfile liegt
+          context: ./cod2
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # HIER SIND DIE NEUEN BUILD-ARGUMENTE FÜR DIE LINUXGSM-DATEI
+          build-args: |
+            DL_URL=http://linuxgsm.download/CallOfDuty2/
+            DL_FILE=cod2-lnxded-1.3-full.tar.xz
+            SERVER_BINARY=cod2_lnxded
+        # This step uses the identity token to provision an ephemeral certificate
+        # against the sigstore community Fulcio instance.
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
