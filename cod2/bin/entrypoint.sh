@@ -15,18 +15,21 @@ else
     echo "Dateien bereits vorhanden."
 fi
 
-# --- Neue, verbesserte Server-Startlogik ---
-# Das Panel übergibt den Startbefehl in der Variable $STARTUP.
-# Wir müssen die {{...}}-Platzhalter darin durch die Werte aus den
-# anderen Umgebungsvariablen ersetzen.
+# --- Finale, robuste Server-Startlogik ---
+# Wir bauen den Startbefehl manuell mit den vom Panel bereitgestellten Umgebungsvariablen.
+# Dies ist die sicherste Methode und umgeht alle Parsing-Probleme.
 
-# Ersetze die Platzhalter im Startbefehl.
-# Diese Methode ist sehr robust gegen leere Variablen.
-# Wir verwenden hier `eval` um die Befehlsersetzung durchzuführen.
-PARSED_STARTUP=$(eval echo $(echo ${STARTUP}))
+# Überprüfe, ob die Variable SERVER_CFG gesetzt ist, sonst nimm einen Standardwert.
+if [ -z "${SERVER_CFG}" ]; then
+    CFG_FILE="server.cfg"
+else
+    CFG_FILE="${SERVER_CFG}"
+fi
+
+START_COMMAND="./cod2_lnxded +set dedicated 2 +set net_ip ${SERVER_IP} +set net_port ${SERVER_PORT} +set logfile 1 +exec ${CFG_FILE}"
 
 # Gib den finalen Befehl zur Kontrolle aus
-echo "Finaler, geparster Startbefehl: ${PARSED_STARTUP}"
+echo "Finaler, manuell gebauter Startbefehl: ${START_COMMAND}"
 
 # Führe den Befehl aus
-exec ${PARSED_STARTUP}
+exec ${START_COMMAND}
