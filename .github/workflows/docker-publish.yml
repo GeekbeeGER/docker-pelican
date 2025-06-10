@@ -1,0 +1,50 @@
+# Dateiname: .github/workflows/build-and-push.yml
+
+name: 'docker-pelican-cod2'
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push-cod2:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 'Checkout Source Code'
+        uses: actions/checkout@v4
+
+      - name: 'Login to GitHub Container Registry'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Extract metadata for Docker'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      # Dies ist der korrigierte Schritt
+      - name: 'Build and Push Docker Image'
+        uses: docker/build-push-action@v5
+        with:
+          # Sage dem Build-Prozess, dass er im Unterordner 'cod2' arbeiten soll
+          context: ./cod2
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            DL_URL=http://linuxgsm.download/CallOfDuty2/
+            DL_FILE=cod2-lnxded-1.3-full.tar.xz
+            SERVER_BINARY=cod2_lnxded
