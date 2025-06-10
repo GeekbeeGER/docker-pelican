@@ -1,3 +1,6 @@
+# ------------------------------------------------------------------
+#  STAGE 1: Basis-Setup und Abhängigkeiten
+# ------------------------------------------------------------------
 # Wir verwenden das offizielle i386-Image, das ist sehr gut für 32-Bit-Spiele.
 FROM --platform=$TARGETOS/$TARGETARCH i386/debian:bookworm-slim
 
@@ -5,40 +8,63 @@ FROM --platform=$TARGETOS/$TARGETARCH i386/debian:bookworm-slim
 LABEL author="Geekbee" maintainer="support@bawialnia.biz"
 LABEL org.opencontainers.image.licenses=GPLv3
 
-# Umgebungsvariablen setzen
+# Umgebungsvariablen für eine saubere Konfiguration
 ENV USER=container \
     HOME=/home/container \
     DEBIAN_FRONTEND=noninteractive
 
-# --- System-Setup und Paketinstallation ---
-RUN \
-    apt-get update && \
-    apt-get install --no-install-recommends -y \
+# Installiere alle notwendigen Systempakete als ROOT
+# - wget, tar, xz-utils: Zum Herunterladen und Entpacken, falls nötig
+# - lib32gcc-s1, lib32stdc++6: Kritische 32-Bit-Bibliotheken für alte Spiele
+# - locales, tzdata: Für korrekte Zeit- und Spracheinstellungen
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
         wget \
         tar \
         xz-utils \
-        binutils \
-        iproute2 \
-        net-tools \
-        tzdata \
-        locales && \
-    update-locale lang=en_US.UTF-8 && \
-    dpkg-reconfigure --frontend noninteractive locales && \
-    useradd -m -d /home/container -s /bin/bash container && \
+        lib32gcc-s1 \
+        lib32stdc++6 \
+        locales \
+        tzdata && \
+    # Konfiguriere die Locales
+    echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
+    locale-gen en_US.UTF-8 && \
+    update-locale LANG=en_US.UTF-8 && \
+    # Erstelle den unprivilegierten Benutzer
+    useradd -m -d ${HOME} -s /bin/bash ${USER} && \
+    # Räume den Apt-Cache auf, um das Image klein zu halten
     rm -rf /var/lib/apt/lists/*
 
-# --- Vorbereitung des Entrypoint-Skripts (als ROOT) ---
-# Annahme: entrypoint.sh liegt im Ordner 'bin' im selben Verzeichnis wie die Dockerfile
-COPY ./bin/entrypoint.sh /entrypoint.sh
-# Führe chmod und chown als ROOT aus, bevor wir den Benutzer wechseln.
-RUN chmod +x /entrypoint.sh && chown ${USER}:${USER} /entrypoint.sh
-
-# --- Wechsel zum unprivilegierten Benutzer ---
-# Jetzt ist alles vorbereitet, und wir können sicher zum 'container'-Benutzer wechseln.
-USER ${USER}
-
-# Arbeitsverzeichnis festlegen
+# ------------------------------------------------------------------
+#  STAGE 2: Installation der Call of Duty 2 Serverdateien
+# ------------------------------------------------------------------
+# Wechsle zum Arbeitsverzeichnis des Benutzers
 WORKDIR ${HOME}
 
-# Standardbefehl beim Starten des Containers
-CMD [ "/entrypoint.sh" ]
+# --- HIER KOMMT DIE WICHTIGSTE ÄNDERUNG ---
+# Kopiere die CoD2-Serverdateien in das Arbeitsverzeichnis des Containers.
+# ANNAHME: Die CoD2-Dateien (`cod2_lnxded`, `main`-Ordner etc.)
+# liegen im gleichen Verzeichnis wie dein Dockerfile.
+COPY --chown=container:container . .
+
+# Mache die Server-Executable ausführbar.
+# Dieser Schritt ist KRITISCH und löst wahrscheinlich deinen "No such file or directory"-Fehler.
+RUN chmod +x ./cod2_lnxded
+
+# ------------------------------------------------------------------
+#  STAGE 3: Finale Konfiguration und Entrypoint
+# ------------------------------------------------------------------
+# Wechsle jetzt endgültig zum unprivilegierten Benutzer.
+# Alles, was ab hier passiert, wird als 'container'-Benutzer ausgeführt.
+USER ${USER}
+
+# Definiere den Entrypoint. Dieser wird anstelle des Panel-Startbefehls ausgeführt.
+# WICHTIG: Wenn du einen Entrypoint definierst, wird der "Startup Command" aus dem Panel
+# als Argument an diesen Entrypoint übergeben!
+COPY --chown=container:container ./bin/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT [ "/entrypoint.sh" ]
+
+# Der CMD-Befehl wird hier ignoriert, wenn der Server über das Pelican Panel gestartet wird,
+# da das Panel seine eigenen Argumente (den "Startup Command") an den Entrypoint übergibt.
+CMD ["./cod2_lnxded"]
