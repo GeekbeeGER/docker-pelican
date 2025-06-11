@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+# Wechsel in das Hauptverzeichnis des Containers
 cd /home/container
 
 # --- Installationslogik (unverändert und funktionierend) ---
@@ -15,22 +16,35 @@ else
     echo "Dateien bereits vorhanden."
 fi
 
-# --- NEU: Logik zur automatischen Erstellung der server.cfg ---
-# Überprüfe, ob die Variable SERVER_CFG gesetzt ist, sonst nimm einen Standardwert.
+# --- KORRIGIERTE LOGIK ZUR ERSTELLUNG DER server.cfg IM "main" ORDNER ---
+
+# 1. Definiere den Unterordner für die Konfiguration.
+#    Dies ist der Ordner, der im Panel unter "File Manager" sichtbar ist.
+CONFIG_DIR="main"
+
+# 2. Stelle sicher, dass der Konfigurationsordner existiert.
+#    Normalerweise erledigt der Mount das, aber dies ist eine Absicherung.
+mkdir -p ${CONFIG_DIR}
+
+# 3. Definiere den Namen der Konfigurationsdatei.
+#    Standard ist "server.cfg", kann aber über die Variable SERVER_CFG geändert werden.
 if [ -z "${SERVER_CFG}" ]; then
     CFG_FILE="server.cfg"
 else
     CFG_FILE="${SERVER_CFG}"
 fi
 
-# Prüfe, ob die Konfigurationsdatei NICHT existiert.
-if [ ! -f "${CFG_FILE}" ]; then
-    echo "Konfigurationsdatei '${CFG_FILE}' nicht gefunden. Erstelle eine Standard-Version..."
-    # Schreibe eine Standard-Konfiguration in die Datei.
-    # Der `cat <<EOF > ...` Befehl ist ideal, um mehrzeiligen Text zu schreiben.
-    cat <<EOF > ${CFG_FILE}
+# 4. Kombiniere Ordner und Dateiname zum vollständigen Pfad.
+FULL_CFG_PATH="${CONFIG_DIR}/${CFG_FILE}"
+
+# 5. Prüfe, ob die Konfigurationsdatei im "main"-Ordner NICHT existiert.
+if [ ! -f "${FULL_CFG_PATH}" ]; then
+    echo "Konfigurationsdatei unter '${FULL_CFG_PATH}' nicht gefunden. Erstelle eine Standard-Version..."
+    # Schreibe die Standard-Konfiguration in die Datei im "main" Ordner.
+    cat <<EOF > ${FULL_CFG_PATH}
 // ### Automatisch erstellte Konfiguration ###
-// Diese Datei wurde erstellt, weil keine vorhanden war.
+// Diese Datei wurde erstellt, weil keine im 'main'-Ordner vorhanden war.
+// Sie können diese Datei nach Belieben bearbeiten.
 
 // --- GRUNDEINSTELLUNGEN ---
 // Der Name Ihres Servers, wie er in der Serverliste erscheint.
@@ -39,27 +53,23 @@ sets sv_hostname "^2Neuer ^7Call of Duty 2 Server"
 
 // Das RCON-Passwort zur Fernverwaltung des Servers.
 // Es wird automatisch aus den Panel-Einstellungen übernommen.
-sets rcon_password "${RCON_PASSWORD}"
+set rcon_password "${RCON_PASSWORD}"
 
-// --- SPIEL-EINSTELLUNGEN ---
-// Der Spielmodus (dm, tdm, sd, ctf, hq)
-set g_gametype "dm"
-
-// --- MAP-ROTATION ---
-// Eine einfache Standard-Map-Rotation.
-set sv_maprotation "map mp_carentan map mp_toujane map mp_dawnville map mp_matmata"
+// --- MAP-ROTATION & START ---
+// Definiere die Map-Rotation. Der Server startet mit der ersten Map in dieser Liste.
+set sv_maprotation "gametype dm map mp_carentan gametype tdm map mp_toujane gametype sd map mp_burgundy"
 set sv_maprotationcurrent ""
 
-// Starte die erste Map in der Rotation.
+// Der wichtigste Befehl: Starte die Rotation.
 wait
-map mp_carentan
+map_rotate
 EOF
-    echo "Standard-Konfiguration wurde erfolgreich erstellt."
+    echo "Standard-Konfiguration wurde erfolgreich in '${FULL_CFG_PATH}' erstellt."
 fi
 
-# --- Server-Startlogik (unverändert und funktionierend) ---
-# Baue den Startbefehl manuell mit den vom Panel bereitgestellten Umgebungsvariablen.
-START_COMMAND="./cod2_lnxded +set dedicated 2 +set net_ip 0.0.0.0 +set net_port ${SERVER_PORT} +set logfile 1 +exec ${CFG_FILE}"
+# --- ANGEPASSTE SERVER-STARTLOGIK ---
+# Der +exec Befehl muss jetzt den korrekten Pfad zur Konfigurationsdatei beinhalten.
+START_COMMAND="./cod2_lnxded +set dedicated 2 +set net_ip 0.0.0.0 +set net_port ${SERVER_PORT} +set logfile 1 +exec ${FULL_CFG_PATH}"
 
 echo "Finaler, manuell gebauter Startbefehl: ${START_COMMAND}"
 exec ${START_COMMAND}
