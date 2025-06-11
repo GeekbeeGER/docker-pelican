@@ -69,7 +69,7 @@ fi
 
 # --- ANGEPASSTE SERVER-STARTLOGIK ---
 # Der +exec Befehl muss jetzt den korrekten Pfad zur Konfigurationsdatei beinhalten.
-START_COMMAND="./cod2_lnxded +set dedicated 2 +set net_ip 0.0.0.0 +set net_port ${SERVER_PORT} +set logfile 1 +exec ${FULL_CFG_PATH}"
+START_COMMAND="./cod2_lnxded +set dedicated 2 +set net_ip 0.0.0.0 +set net_port ${SERVER_PORT} +set logfile 1 +exec ${FULL_CFG_PATH} +set g_gametype dm +map mp_carentan"
 
 echo "Finaler, manuell gebauter Startbefehl: ${START_COMMAND}"
 exec ${START_COMMAND}
