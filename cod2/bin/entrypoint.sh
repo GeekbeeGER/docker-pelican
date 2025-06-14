@@ -33,11 +33,11 @@ if [ ! -f "${FULL_CFG_PATH}" ]; then
 // Sie können diese Datei im Pterodactyl File Manager unter /main/${CFG_FILE_NAME} bearbeiten.
 
 // --- GRUNDEINSTELLUNGEN ---
-sets sv_hostname "^2Neuer ^7Call of Duty 2 Server"
+sets sv_hostname "^7Call of Duty 2 Server ^2by ^4Geekbee"
 set rcon_password "${RCON_PASSWORD}"
 
 // --- MAP-ROTATION & START ---
-set sv_maprotation "gametype dm map mp_carentan gametype tdm map mp_toujane gametype sd map mp_burgundy"
+set sv_maprotation "gametype tdm map mp_toujane gametype sd map mp_burgundy"
 set sv_maprotationcurrent ""
 wait
 map_rotate
