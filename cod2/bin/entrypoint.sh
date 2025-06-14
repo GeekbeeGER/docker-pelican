@@ -1,10 +1,10 @@
-#!/bin/bash
+!/#!/bin/bash
 set -e
 
-# Wechsel in das Hauptverzeichnis des Containers
+# Change to the container's root directory
 cd /home/container
 
-# --- Installationslogik (unverändert und funktionierend) ---
+# --- Installation Logic (unchanged and working) ---
 if [ ! -f "cod2_lnxded" ]; then
     echo "COD2-Serverdateien nicht gefunden. Starte Download..."
     wget -q -O cod2-server.tar.xz "http://linuxgsm.download/CallOfDuty2/cod2-lnxded-1.3-full.tar.xz"
@@ -12,38 +12,20 @@ if [ ! -f "cod2_lnxded" ]; then
     rm cod2-server.tar.xz
     chmod +x ./cod2_lnxded
     echo "Installation abgeschlossen."
-else
-    echo "Dateien bereits vorhanden."
 fi
 
-# --- KORRIGIERTE LOGIK ZUR ERSTELLUNG DER server.cfg IM "main" ORDNER ---
+# --- CORRECTED LOGIC FOR server.cfg IN THE ROOT DIRECTORY ---
 
-# 1. Definiere den Unterordner für die Konfiguration.
-#    Dies ist der Ordner, der im Panel unter "File Manager" sichtbar ist.
-CONFIG_DIR="/home/container"
+# 1. Define the configuration file's name.
+#    You can override this with the "Server CFG" variable in Pterodactyl.
+CFG_FILE="${SERVER_CFG:-server.cfg}"
 
-# 2. Stelle sicher, dass der Konfigurationsordner existiert.
-#    Normalerweise erledigt der Mount das, aber dies ist eine Absicherung.
-mkdir -p ${CONFIG_DIR}
-
-# 3. Definiere den Namen der Konfigurationsdatei.
-#    Standard ist "server.cfg", kann aber über die Variable SERVER_CFG geändert werden.
-if [ -z "${SERVER_CFG}" ]; then
-    CFG_FILE="server.cfg"
-else
-    CFG_FILE="${SERVER_CFG}"
-fi
-
-# 4. Kombiniere Ordner und Dateiname zum vollständigen Pfad.
-FULL_CFG_PATH="${CONFIG_DIR}/${CFG_FILE}"
-
-# 5. Prüfe, ob die Konfigurationsdatei im "main"-Ordner NICHT existiert.
-if [ ! -f "${FULL_CFG_PATH}" ]; then
-    echo "Konfigurationsdatei unter '${FULL_CFG_PATH}' nicht gefunden. Erstelle eine Standard-Version..."
-    # Schreibe die Standard-Konfiguration in die Datei im "main" Ordner.
-    cat <<EOF > ${FULL_CFG_PATH}
+# 2. Check if the configuration file exists in the root directory.
+if [ ! -f "${CFG_FILE}" ]; then
+    echo "Konfigurationsdatei unter '${CFG_FILE}' nicht gefunden. Erstelle eine Standard-Version..."
+    # Create the default configuration in the root directory.
+    cat <<EOF > ${CFG_FILE}
 // ### Automatisch erstellte Konfiguration ###
-// Diese Datei wurde erstellt, weil keine im 'main'-Ordner vorhanden war.
 // Sie können diese Datei nach Belieben bearbeiten.
 
 // --- GRUNDEINSTELLUNGEN ---
@@ -64,12 +46,13 @@ set sv_maprotationcurrent ""
 wait
 map_rotate
 EOF
-    echo "Standard-Konfiguration wurde erfolgreich in '${FULL_CFG_PATH}' erstellt."
+    echo "Standard-Konfiguration wurde erfolgreich in '${CFG_FILE}' erstellt."
 fi
 
-# --- ANGEPASSTE SERVER-STARTLOGIK ---
-# Der +exec Befehl muss jetzt den korrekten Pfad zur Konfigurationsdatei beinhalten.
-START_COMMAND="./cod2_lnxded +set dedicated 2 +set net_ip 0.0.0.0 +set net_port ${SERVER_PORT} +set logfile 1 +exec ${FULL_CFG_PATH} +set g_gametype dm +map mp_carentan"
+# --- FINALIZED SERVER STARTUP LOGIC ---
+# The +exec command now correctly points to the config file in the root directory.
+# The startup map/gametype is removed, as the config file handles it via map_rotate.
+START_COMMAND="./cod2_lnxded +set dedicated 2 +set net_ip 0.0.0.0 +set net_port ${SERVER_PORT} +set logfile 1 +exec ${CFG_FILE}"
 
 echo "Finaler, manuell gebauter Startbefehl: ${START_COMMAND}"
 exec ${START_COMMAND}
