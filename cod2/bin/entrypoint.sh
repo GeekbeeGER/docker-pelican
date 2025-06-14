@@ -12,64 +12,52 @@ if [ ! -f "cod2_lnxded" ]; then
     rm cod2-server.tar.xz
     chmod +x ./cod2_lnxded
     echo "Installation abgeschlossen."
-else
-    echo "Dateien bereits vorhanden."
 fi
 
-# --- KORRIGIERTE LOGIK ZUR ERSTELLUNG DER server.cfg IM "main" ORDNER ---
+# --- LOGIK ZUR ERSTELLUNG DER server.cfg IM "main" ORDNER ---
 
-# 1. Definiere den Unterordner für die Konfiguration.
-#    Dies ist der Ordner, der im Panel unter "File Manager" sichtbar ist.
-CONFIG_DIR="/home/container/"
+# Stelle sicher, dass der "main" Ordner existiert
+mkdir -p ./main
 
-# 2. Stelle sicher, dass der Konfigurationsordner existiert.
-#    Normalerweise erledigt der Mount das, aber dies ist eine Absicherung.
-mkdir -p ${CONFIG_DIR}
+# Definiere den Namen und den vollständigen Pfad der Konfigurationsdatei
+CFG_FILE_NAME="${SERVER_CFG:-server.cfg}"
+FULL_CFG_PATH="./main/${CFG_FILE_NAME}"
 
-# 3. Definiere den Namen der Konfigurationsdatei.
-#    Standard ist "server.cfg", kann aber über die Variable SERVER_CFG geändert werden.
-if [ -z "${SERVER_CFG}" ]; then
-    CFG_FILE="server.cfg"
-else
-    CFG_FILE="${SERVER_CFG}"
-fi
-
-# 4. Kombiniere Ordner und Dateiname zum vollständigen Pfad.
-FULL_CFG_PATH="${CONFIG_DIR}/${CFG_FILE}"
-
-# 5. Prüfe, ob die Konfigurationsdatei im "main"-Ordner NICHT existiert.
+# Prüfe, ob die Konfigurationsdatei im "main"-Ordner NICHT existiert
 if [ ! -f "${FULL_CFG_PATH}" ]; then
     echo "Konfigurationsdatei unter '${FULL_CFG_PATH}' nicht gefunden. Erstelle eine Standard-Version..."
-    # Schreibe die Standard-Konfiguration in die Datei im "main" Ordner.
+    # Schreibe die Standard-Konfiguration in die Datei im "main" Ordner
     cat <<EOF > ${FULL_CFG_PATH}
 // ### Automatisch erstellte Konfiguration ###
 // Diese Datei wurde erstellt, weil keine im 'main'-Ordner vorhanden war.
-// Sie können diese Datei nach Belieben bearbeiten.
+// Sie können diese Datei im Pterodactyl File Manager unter /main/${CFG_FILE_NAME} bearbeiten.
 
 // --- GRUNDEINSTELLUNGEN ---
-// Der Name Ihres Servers, wie er in der Serverliste erscheint.
-// Farbcodes: ^1=Rot, ^2=Grün, ^3=Gelb, ^4=Blau, ^5=Cyan, ^6=Pink, ^7=Weiß
 sets sv_hostname "^2Neuer ^7Call of Duty 2 Server"
-
-// Das RCON-Passwort zur Fernverwaltung des Servers.
-// Es wird automatisch aus den Panel-Einstellungen übernommen.
 set rcon_password "${RCON_PASSWORD}"
 
 // --- MAP-ROTATION & START ---
-// Definiere die Map-Rotation. Der Server startet mit der ersten Map in dieser Liste.
 set sv_maprotation "gametype dm map mp_carentan gametype tdm map mp_toujane gametype sd map mp_burgundy"
 set sv_maprotationcurrent ""
-
-// Der wichtigste Befehl: Starte die Rotation.
 wait
 map_rotate
 EOF
     echo "Standard-Konfiguration wurde erfolgreich in '${FULL_CFG_PATH}' erstellt."
 fi
 
-# --- ANGEPASSTE SERVER-STARTLOGIK ---
-# Der +exec Befehl muss jetzt den korrekten Pfad zur Konfigurationsdatei beinhalten.
-START_COMMAND="./cod2_lnxded +set dedicated 2 +set net_ip 0.0.0.0 +set net_port ${SERVER_PORT} +set logfile 1 +exec /home/container/main/server.cfg +set g_gametype dm +map mp_carentan"
+# --- DER TRICK: SYMBOLISCHER LINK ---
+# Erstelle eine "Verknüpfung" (symbolischer Link) im Hauptverzeichnis,
+# die auf die echte Konfigurationsdatei im 'main'-Ordner zeigt.
+# Die Option -f sorgt dafür, dass ein alter Link überschrieben wird.
+echo "Erstelle symbolischen Link: ./${CFG_FILE_NAME} -> ${FULL_CFG_PATH}"
+ln -sf "${FULL_CFG_PATH}" "./${CFG_FILE_NAME}"
+
+
+# --- FINALE SERVER-STARTLOGIK ---
+# Der +exec Befehl nutzt nun den einfachen Namen. Das Spiel findet den Link im Hauptverzeichnis
+# und lädt die korrekte Datei aus dem 'main' Ordner.
+# Die Map und Gametype am Ende sind nur für den allerersten Start, danach übernimmt die cfg.
+START_COMMAND="./cod2_lnxded +set dedicated 2 +set net_ip 0.0.0.0 +set net_port ${SERVER_PORT} +set logfile 1 +exec ${CFG_FILE_NAME} +set g_gametype dm +map mp_carentan"
 
 echo "Finaler, manuell gebauter Startbefehl: ${START_COMMAND}"
 exec ${START_COMMAND}
