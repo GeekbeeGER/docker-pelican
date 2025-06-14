@@ -26,7 +26,6 @@ FULL_CFG_PATH="./main/${CFG_FILE_NAME}"
 # Prüfe, ob die Konfigurationsdatei im "main"-Ordner NICHT existiert
 if [ ! -f "${FULL_CFG_PATH}" ]; then
     echo "Konfigurationsdatei unter '${FULL_CFG_PATH}' nicht gefunden. Lade Konfiguration von GitHub herunter..."
-    # Lade die Konfigurationsdatei von der rohen GitHub-URL herunter
     wget -q -O "${FULL_CFG_PATH}" "https://raw.githubusercontent.com/GeekbeeGER/docker-pelican/main/cod2/server.cfg"
     echo "Konfiguration wurde erfolgreich nach '${FULL_CFG_PATH}' heruntergeladen."
 else
@@ -34,17 +33,14 @@ else
 fi
 
 # --- DER TRICK: SYMBOLISCHER LINK ---
-# Erstelle eine "Verknüpfung" (symbolischer Link) im Hauptverzeichnis,
-# die auf die echte Konfigurationsdatei im 'main'-Ordner zeigt.
-# Die Option -f sorgt dafür, dass ein alter Link überschrieben wird.
 echo "Erstelle symbolischen Link: ./${CFG_FILE_NAME} -> ${FULL_CFG_PATH}"
 ln -sf "${FULL_CFG_PATH}" "./${CFG_FILE_NAME}"
 
 
-# --- FINALE SERVER-STARTLOGIK ---
-# Der +exec Befehl nutzt nun den einfachen Namen. Das Spiel findet den Link im Hauptverzeichnis
-# und lädt die korrekte Datei aus dem 'main' Ordner.
-START_COMMAND="./cod2_lnxded +set dedicated 2 +set net_ip 0.0.0.0 +set net_port ${SERVER_PORT} +set logfile 1 +exec ${CFG_FILE_NAME}"
+# --- KORRIGIERTE FINALE SERVER-STARTLOGIK ---
+# Wir führen zuerst die Konfiguration aus und starten DANACH die Kartenrotation als separaten Befehl.
+# Dies löst das "execing"-Problem.
+START_COMMAND="./cod2_lnxded +set dedicated 2 +set net_ip 0.0.0.0 +set net_port ${SERVER_PORT} +set logfile 1 +exec ${CFG_FILE_NAME} +map_rotate"
 
 echo "Finaler, manuell gebauter Startbefehl: ${START_COMMAND}"
 exec ${START_COMMAND}
