@@ -19,7 +19,7 @@ fi
 --- KORRIGIERTE LOGIK ZUR ERSTELLUNG DER server.cfg IM "main" ORDNER ---
 1. Definiere den Unterordner für die Konfiguration.
 Dies ist der Ordner, der im Panel unter "File Manager" sichtbar ist.
-CONFIG_DIR="/home/container/main"
+CONFIG_DIR="/home/container"
 
 2. Stelle sicher, dass der Konfigurationsordner existiert.
 Normalerweise erledigt der Mount das, aber dies ist eine Absicherung.
