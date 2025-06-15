@@ -6,7 +6,7 @@ cd /home/container
 
 # --- Installationslogik (unverändert und funktionierend) ---
 if [ ! -f "coduo_lnxded" ]; then
-    echo "COD2-Serverdateien nicht gefunden. Starte Download..."
+    echo "CODUO-Serverdateien nicht gefunden. Starte Download..."
     wget -q -O coduo-server.tar.xz "http://linuxgsm.download/CallOfDutyUnitedOffensive/coduo-lnxded-1.51b-full.tar.xz"
     tar -xf coduo-server.tar.xz
     rm coduo-server.tar.xz
