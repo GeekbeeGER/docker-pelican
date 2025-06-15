@@ -1,0 +1,52 @@
+# Dateipfad: .github/workflows/build-coduo.yml
+# Finale Version zur Erstellung von ghcr.io/geekbeeger/docker-pelican-coduo:latest
+
+name: 'Build and Push CoDUO Runtime Image'
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  # Die zu verwendende Container-Registry
+  REGISTRY: ghcr.io
+  # Wir legen den Namen des Images explizit fest, anstatt ihn vom Repo-Namen abzuleiten.
+  IMAGE_NAME: geekbeeger/docker-pelican-coduo
+
+jobs:
+  build-and-push-cod2:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 'Checkout Source Code'
+        uses: actions/checkout@v4
+
+      - name: 'Login to GitHub Container Registry'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # HIER IST DIE WICHTIGE ÄNDERUNG FÜR DEN TAG:
+      # Wir weisen die Action an, den Tag 'latest' zu verwenden, wenn auf 'main' gepusht wird.
+      - name: 'Extract metadata for Docker'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      # Der Build-Schritt bleibt ansonsten unverändert
+      - name: 'Build and Push Docker Image'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./coduo
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
