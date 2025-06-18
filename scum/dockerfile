@@ -17,11 +17,10 @@ RUN dpkg --add-architecture i386 && \
         lib32gcc-s1 && \
     rm -rf /var/lib/apt/lists/*
 
-# Erstelle den non-root-Benutzer 'container'
-RUN useradd --system --home /home/container --shell /bin/bash container
+# Erstelle den non-root-Benutzer 'container' UND sein Home-Verzeichnis mit '-m'
+RUN useradd --system -m --home /home/container --shell /bin/bash container
 
-# --- VERBESSERTE STEAMCMD INSTALLATION ---
-# Wir installieren SteamCMD jetzt nach /opt/steamcmd, was sauberer ist.
+# Installiere SteamCMD
 RUN mkdir -p /opt/steamcmd && \
     cd /opt/steamcmd && \
     wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar xvz
