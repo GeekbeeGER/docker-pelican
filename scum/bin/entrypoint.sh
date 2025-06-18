@@ -11,8 +11,8 @@ echo "========================================="
 echo "Installiere/Aktualisiere den SCUM Server mit dem Account: ${STEAM_USER}"
 echo "Verwende Playtest App-ID: 3792580"
 echo "========================================="
-# HIER IST DIE GEWÜNSCHTE PLAYTEST APP-ID:
-/home/container/steamcmd/steamcmd.sh +force_install_dir /mnt/server +login ${STEAM_USER} ${STEAM_PASS} +app_update 3792580 validate +quit
+# HIER IST DER KORRIGIERTE PFAD ZU STEAMCMD:
+/opt/steamcmd/steamcmd.sh +force_install_dir /mnt/server +login ${STEAM_USER} ${STEAM_PASS} +app_update 3792580 validate +quit
 
 mkdir -p ./SCUM/Saved/Config/WindowsServer
 
