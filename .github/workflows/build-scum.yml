@@ -27,7 +27,8 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          # HIER DIE ÄNDERUNG: Wir hängen den gewünschten Suffix an
+          images: ghcr.io/${{ github.repository }}-scum
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
