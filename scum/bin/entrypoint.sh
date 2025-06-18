@@ -3,10 +3,16 @@ set -e # Beendet das Skript sofort bei einem Fehler
 
 cd /mnt/server
 
+# Setze Standardwerte, falls die Variablen nicht gesetzt sind (Sicherheitsnetz)
+: "${STEAM_USER:?Bitte gib einen Steam-Benutzernamen in den Server-Startvariablen an.}"
+: "${STEAM_PASS:?Bitte gib ein Steam-Passwort in den Server-Startvariablen an.}"
+
 echo "========================================="
-echo "Installiere/Aktualisiere den SCUM Server..."
+echo "Installiere/Aktualisiere den SCUM Server mit dem Account: ${STEAM_USER}"
+echo "Verwende Playtest App-ID: 3792580"
 echo "========================================="
-/home/container/steamcmd/steamcmd.sh +login anonymous +force_install_dir /mnt/server +app_update 3792580 validate +quit
+# HIER IST DIE GEWÜNSCHTE PLAYTEST APP-ID:
+/home/container/steamcmd/steamcmd.sh +force_install_dir /mnt/server +login ${STEAM_USER} ${STEAM_PASS} +app_update 3792580 validate +quit
 
 mkdir -p ./SCUM/Saved/Config/WindowsServer
 
