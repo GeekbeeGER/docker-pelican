@@ -27,15 +27,17 @@ RUN mkdir -p /opt/steamcmd && \
     cd /opt/steamcmd && \
     wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar xvz
 
-# Erstelle das Server-Verzeichnis
-RUN mkdir -p /mnt/server
+# Erstelle die Verzeichnisse, die SteamCMD und der Server benötigen
+# DIES IST DIE WICHTIGE HINZUFÜGUNG:
+RUN mkdir -p /mnt/server /home/container/Steam && \
+    chown -R container:container /home/container
 
 # Kopiere das Startskript in den Container
 COPY bin/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Setze alle Berechtigungen in einem Rutsch
-RUN chown -R container:container /opt/steamcmd /mnt/server /home/container && \
-    chmod +x /entrypoint.sh
+# Setze die finalen Berechtigungen für alle wichtigen Ordner
+RUN chown -R container:container /opt/steamcmd /mnt/server
 
 # --- WECHSEL ZUM EINGESCHRÄNKTEN BENUTZER (GANZ ZUM SCHLUSS) ---
 
