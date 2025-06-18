@@ -5,6 +5,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV WINEARCH=win64
 ENV WINEPREFIX=/mnt/server/.wine
 
+# --- SETUP ALS ROOT-BENUTZER ---
+
 # Installiere notwendige Pakete
 RUN dpkg --add-architecture i386 && \
     apt-get update && \
@@ -28,18 +30,20 @@ RUN mkdir -p /opt/steamcmd && \
 # Erstelle das Server-Verzeichnis
 RUN mkdir -p /mnt/server
 
-# Setze die korrekten Berechtigungen für alle wichtigen Ordner
-RUN chown -R container:container /opt/steamcmd /mnt/server /home/container
+# Kopiere das Startskript in den Container
+COPY bin/entrypoint.sh /entrypoint.sh
 
-# Setze das Arbeitsverzeichnis für den Server
-WORKDIR /mnt/server
+# Setze alle Berechtigungen in einem Rutsch
+RUN chown -R container:container /opt/steamcmd /mnt/server /home/container && \
+    chmod +x /entrypoint.sh
+
+# --- WECHSEL ZUM EINGESCHRÄNKTEN BENUTZER (GANZ ZUM SCHLUSS) ---
 
 # Wechsle zum 'container' Benutzer
 USER container
 
-# Kopiere das Startskript und mache es ausführbar
-COPY bin/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Setze das finale Arbeitsverzeichnis
+WORKDIR /mnt/server
 
 # Definiere den Entrypoint
 ENTRYPOINT ["/entrypoint.sh"]
