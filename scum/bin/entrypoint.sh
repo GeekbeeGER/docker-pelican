@@ -1,18 +1,17 @@
 #!/bin/bash
-set -e # Beendet das Skript sofort bei einem Fehler
+set -e
 
 cd /mnt/server
 
-# Setze Standardwerte, falls die Variablen nicht gesetzt sind (Sicherheitsnetz)
 : "${STEAM_USER:?Bitte gib einen Steam-Benutzernamen in den Server-Startvariablen an.}"
 : "${STEAM_PASS:?Bitte gib ein Steam-Passwort in den Server-Startvariablen an.}"
 
 echo "========================================="
 echo "Installiere/Aktualisiere den SCUM Server mit dem Account: ${STEAM_USER}"
-echo "Verwende App-ID: 1824900
+echo "Verwende STABILE App-ID: 1824900"
 echo "========================================="
-# HIER IST DER KORRIGIERTE PFAD ZU STEAMCMD:
-/opt/steamcmd/steamcmd.sh +force_install_dir /mnt/server +login ${STEAM_USER} ${STEAM_PASS} +app_update 1824900 validate +quit
+# HIER IST DIE STABILE, EMPFOHLENE APP-ID:
+/opt/steamcmd/steamcmd.sh +force_install_dir /mnt/server +login "${STEAM_USER}" "${STEAM_PASS}" +app_update 1824900 validate +quit
 
 mkdir -p ./SCUM/Saved/Config/WindowsServer
 
