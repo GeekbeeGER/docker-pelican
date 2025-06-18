@@ -34,7 +34,7 @@ jobs:
         with:
           # DIES IST DER ENTSCHEIDENDE PUNKT:
           # Wir sagen der Action, dass sie im Ordner 'scum-server' arbeiten soll.
-          context: ./scum-server
+          context: ./scum
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
