@@ -1,0 +1,56 @@
+# Name des Workflows, der in der "Actions"-Ansicht von GitHub angezeigt wird
+name: Build and Push SCUM Docker Image
+
+# Definiert, wann dieser Workflow ausgeführt werden soll
+on:
+  # Bei jedem Push auf den 'main'-Branch
+  push:
+    branches: [ "main" ]
+  # Ermöglicht das manuelle Starten des Workflows über die GitHub UI
+  workflow_dispatch:
+
+# Definiert die Jobs, die ausgeführt werden
+jobs:
+  build-and-push:
+    # Der Typ der virtuellen Maschine, auf der der Job laufen soll
+    runs-on: ubuntu-latest
+
+    # Definiert die Berechtigungen, die der Job benötigt
+    permissions:
+      contents: read       # Berechtigung zum Auschecken des Codes
+      packages: write      # Berechtigung zum Hochladen von Paketen (dem Docker-Image)
+
+    # Die einzelnen Schritte des Jobs
+    steps:
+      # Schritt 1: Code auschecken
+      # Holt den Code deines Repositories (Dockerfile, entrypoint.sh) auf die virtuelle Maschine
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Schritt 2: An der GitHub Container Registry (ghcr.io) anmelden
+      # Verwendet eine vorgefertigte Action zum Einloggen bei Docker
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          # GITHUB_TOKEN ist ein automatisch generiertes Secret, du musst es nicht selbst erstellen
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Schritt 3: Docker-Metadaten extrahieren
+      # Diese Action generiert automatisch passende Tags für das Image (z.B. 'latest', 'v1.1.0')
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+
+      # Schritt 4: Docker-Image bauen und hochladen
+      # Der Kernschritt: Führt 'docker build' und 'docker push' aus
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
