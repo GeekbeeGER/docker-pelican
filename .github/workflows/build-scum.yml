@@ -27,10 +27,10 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          # DIES IST DIE ENDGÜLTIGE, KORREKTE VERSION:
-          # Wir verwenden die richtige Variable 'github.repository_owner'.
-          # Die Action kümmert sich um die Umwandlung in Kleinbuchstaben.
           images: ghcr.io/${{ github.repository_owner }}/docker-pelican-scum
+          tags: |
+            # set latest tag for default branch
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
