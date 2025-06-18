@@ -6,7 +6,7 @@ cd /mnt/server
 echo "========================================="
 echo "Installiere/Aktualisiere den SCUM Server..."
 echo "========================================="
-/home/container/steamcmd/steamcmd.sh +login anonymous +force_install_dir /mnt/server +app_update 1824900 validate +quit
+/home/container/steamcmd/steamcmd.sh +login anonymous +force_install_dir /mnt/server +app_update 3792580 validate +quit
 
 mkdir -p ./SCUM/Saved/Config/WindowsServer
 
