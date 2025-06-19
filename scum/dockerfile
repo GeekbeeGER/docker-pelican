@@ -1,13 +1,14 @@
-# VERWENDE DEBIAN BULLSEYE (64-BIT)
-FROM debian:bullseye-slim
+# VERSUCH 1: WECHSEL DES BASIS-IMAGES ZU UBUNTU 22.04
+FROM ubuntu:22.04
 
+# Setze Umgebungsvariablen
 ENV DEBIAN_FRONTEND=noninteractive
 ENV WINEARCH=win64
 ENV WINEPREFIX=/mnt/server/.wine
 
 # --- SETUP ALS ROOT-BENUTZER ---
 
-# Installiere notwendige Pakete
+# Installiere notwendige Pakete unter Ubuntu
 RUN dpkg --add-architecture i386 && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -28,7 +29,6 @@ RUN mkdir -p /opt/steamcmd && \
     wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar xvz
 
 # Erstelle die Verzeichnisse, die SteamCMD und der Server benötigen
-# DIES IST DIE WICHTIGE HINZUFÜGUNG:
 RUN mkdir -p /mnt/server /home/container/Steam && \
     chown -R container:container /home/container
 
@@ -39,13 +39,8 @@ RUN chmod +x /entrypoint.sh
 # Setze die finalen Berechtigungen für alle wichtigen Ordner
 RUN chown -R container:container /opt/steamcmd /mnt/server
 
-# --- WECHSEL ZUM EINGESCHRÄNKTEN BENUTZER (GANZ ZUM SCHLUSS) ---
+# --- WECHSEL ZUM EINGESCHRÄNKTEN BENUTZER ---
 
-# Wechsle zum 'container' Benutzer
 USER container
-
-# Setze das finale Arbeitsverzeichnis
 WORKDIR /mnt/server
-
-# Definiere den Entrypoint
 ENTRYPOINT ["/entrypoint.sh"]
