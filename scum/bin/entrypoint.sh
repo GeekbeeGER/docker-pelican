@@ -1,25 +1,25 @@
 #!/bin/bash
 set -e
 
-# Der Arbeitspfad wird bereits von der Dockerfile auf /home/steam/server gesetzt.
+# Der Arbeitspfad ist jetzt /home/container/server
 
 echo "========================================="
 echo "Installiere/Aktualisiere den SCUM Server mit ANONYMEM Login."
 echo "Verwende PLAYTEST App-ID: 3792580"
 echo "========================================="
 
-# Führe SteamCMD aus, um den Server zu installieren/upzudaten.
+# Der Pfad zu steamcmd ist immer noch derselbe, aber das Installationsverzeichnis ist jetzt anders.
 /home/steam/steamcmd/steamcmd.sh \
     +@sSteamCmdForcePlatformType linux \
-    +force_install_dir "/home/steam/server" \
+    +force_install_dir "/home/container/server" \
     +login anonymous \
     +app_update 3792580 validate \
     +quit
 
-# Erstelle notwendige Verzeichnisse, falls nicht vorhanden.
+# Dieser Befehl wird jetzt funktionieren, da der 'container'-Benutzer
+# die vollen Rechte über sein Arbeitsverzeichnis hat.
 mkdir -p ./SCUM/Saved/Config/WindowsServer
 
-# Setze Standardwerte für die Startvariablen.
 : "${SERVER_IP:=0.0.0.0}"
 : "${SERVER_PORT:=7040}"
 : "${QUERY_PORT:=7041}"
