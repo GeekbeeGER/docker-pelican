@@ -2,22 +2,19 @@
 set -e
 
 # Der Arbeitspfad wird bereits von der Dockerfile auf /home/steam/server gesetzt.
-# Der 'cd'-Befehl ist nicht mehr nötig und wird entfernt.
 
-: "${STEAM_USER:?Bitte gib einen Steam-Benutzernamen in den Server-Startvariablen an.}"
-: "${STEAM_PASS:?Bitte gib ein Steam-Passwort in den Server-Startvariablen an.}"
+# Die Überprüfung für STEAM_USER und STEAM_PASS wurde entfernt.
 
 echo "========================================="
-echo "Installiere/Aktualisiere den SCUM Server mit dem Account: ${STEAM_USER}"
+echo "Installiere/Aktualisiere den SCUM Server mit ANONYMEM Login."
 echo "Verwende STABILE App-ID: 1824900"
 echo "========================================="
 
-# Der Pfad zu steamcmd.sh und zum Installationsverzeichnis sind in diesem Image anders
-# Wir sind bereits im richtigen Verzeichnis, daher reicht der relative Pfad.
+# Der Login-Befehl wurde auf 'anonymous' zurückgeändert.
 ./steamcmd.sh \
     +@sSteamCmdForcePlatformType linux \
     +force_install_dir "/home/steam/server" \
-    +login "${STEAM_USER}" "${STEAM_PASS}" \
+    +login anonymous \
     +app_update 3792580 validate \
     +quit
 
