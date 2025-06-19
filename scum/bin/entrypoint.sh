@@ -3,15 +3,14 @@ set -e
 
 # Der Arbeitspfad wird bereits von der Dockerfile auf /home/steam/server gesetzt.
 
-# Die Überprüfung für STEAM_USER und STEAM_PASS wurde entfernt.
-
 echo "========================================="
 echo "Installiere/Aktualisiere den SCUM Server mit ANONYMEM Login."
-echo "Verwende STABILE App-ID: 1824900"
+echo "Verwende PLAYTEST App-ID: 3792580"
 echo "========================================="
 
-# Der Login-Befehl wurde auf 'anonymous' zurückgeändert.
-./steamcmd.sh \
+# HIER IST DER KORRIGIERTE, ABSOLUTE PFAD ZU STEAMCMD
+# und der Login auf 'anonymous' mit der Playtest-ID gesetzt.
+/home/steam/steamcmd/steamcmd.sh \
     +@sSteamCmdForcePlatformType linux \
     +force_install_dir "/home/steam/server" \
     +login anonymous \
