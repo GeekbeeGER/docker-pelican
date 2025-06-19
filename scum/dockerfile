@@ -1,31 +1,29 @@
-# VERSUCH 2: VERWENDUNG EINES VORGEFERTIGTEN STEAMCMD-IMAGES
+# VERWENDUNG EINES VORGEFERTIGTEN STEAMCMD-IMAGES ALS BASIS
 FROM cm2network/steamcmd:latest
-
-# Setze Umgebungsvariablen
-ENV WINEARCH=win64
-ENV WINEPREFIX=/home/steam/server/.wine
 
 # --- SETUP ALS ROOT-BENUTZER ---
 USER root
 
-# Installiere Wine64 (steamcmd ist schon da)
+# Installiere Wine64
 RUN apt-get update && \
     apt-get install -y --no-install-recommends wine64 && \
     rm -rf /var/lib/apt/lists/*
 
-# Der Benutzer 'steam' und sein Home-Verzeichnis '/home/steam' werden vom Basis-Image bereitgestellt.
-# Wir müssen nur das Server-Verzeichnis erstellen.
-RUN mkdir -p /home/steam/server && \
-    chown -R steam:steam /home/steam/server
+# Erstelle unseren eigenen 'container'-Benutzer, mit dem Pelican besser umgehen kann
+RUN useradd --system -m --home /home/container --shell /bin/bash container
 
-# Kopiere das Startskript. Wichtig: Der Pfad muss für den 'steam'-Benutzer zugänglich sein.
-COPY bin/entrypoint.sh /home/steam/entrypoint.sh
-RUN chown steam:steam /home/steam/entrypoint.sh && \
-    chmod +x /home/steam/entrypoint.sh
+# Erstelle das Server-Verzeichnis für unseren neuen Benutzer
+RUN mkdir -p /home/container/server
+
+# Kopiere das Startskript
+COPY bin/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Setze die finalen Berechtigungen. Der 'container'-Benutzer muss SteamCMD ausführen dürfen.
+RUN chown -R container:container /home/container /home/steam /entrypoint.sh
 
 # --- WECHSEL ZUM EINGESCHRÄNKTEN BENUTZER ---
-USER steam
-WORKDIR /home/steam/server
+USER container
+WORKDIR /home/container/server
 
-# Definiere den Entrypoint. Der Pfad muss angepasst werden.
-ENTRYPOINT ["/home/steam/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
