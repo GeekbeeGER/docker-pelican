@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 # Dieses Skript basiert auf dem Original und wurde um professionelle Features erweitert.
 # Es dient nur zur Installation/Aktualisierung des SCUM Servers.
 # Der Server wird über die Startkonfiguration des Panels (z.B. Pterodactyl) gestartet.
@@ -16,11 +17,9 @@ echo -e "${YELLOW}SCUM Server Installations- & Update-Skript${NC}"
 echo -e "${BLUE}-------------------------------------------------${NC}"
 
 # Arbeitsverzeichnis setzen (Standard für viele Panels)
-# Das Original verwendete /home/container/server
 export HOME=/mnt/server
 
 # Steam-Benutzer prüfen
-# Wenn kein Benutzer in den Panel-Variablen gesetzt ist, wird 'anonymous' verwendet.
 if [ -z "${STEAM_USER}" ]; then
     echo -e "${YELLOW}STEAM_USER ist nicht gesetzt. Verwende 'anonymous'.${NC}"
     STEAM_USER="anonymous"
@@ -37,8 +36,6 @@ tar -xzvf steamcmd.tar.gz -C /mnt/server/steamcmd
 cd /mnt/server/steamcmd
 
 # SCUM Server installieren/aktualisieren
-# Die App-ID wird jetzt über eine Variable ${STEAM_APPID} gesteuert.
-# Für den PLAYTEST wäre das 3792580, für die normale Version 513710.
 echo -e "${BLUE}-------------------------------------------------${NC}"
 echo -e "${YELLOW}Installiere/Aktualisiere SCUM Server (App-ID: ${STEAM_APPID})...${NC}"
 echo -e "${YELLOW}Dies kann eine Weile dauern.${NC}"
@@ -58,7 +55,6 @@ mkdir -p /mnt/server/.steam/sdk64
 cp -v linux64/steamclient.so /mnt/server/.steam/sdk64/steamclient.so
 
 # Prüfen, ob die Serverkonfigurationsdatei existiert.
-# Wenn nicht, wird eine Standard-Konfiguration heruntergeladen.
 cd /mnt/server
 CONFIG_FILE="SCUM/Saved/Config/WindowsServer/ServerSettings.ini"
 
@@ -67,7 +63,6 @@ if [ -f "$CONFIG_FILE" ]; then
 else  
   echo -e "${YELLOW}'$CONFIG_FILE' nicht gefunden. Lade Standardkonfiguration herunter...${NC}"
   mkdir -p SCUM/Saved/Config/WindowsServer/
-  # --- HIER IST DIE GEÄNDERTE URL ---
   curl -sSL -o "$CONFIG_FILE" https://raw.githubusercontent.com/GeekbeeGER/docker-pelican/refs/heads/main/scum/config/ServerSettings.ini
 fi
 
