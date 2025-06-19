@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-# Das Arbeitsverzeichnis ist bereits /home/steam/server
+# Der Arbeitspfad wird bereits von der Dockerfile auf /home/steam/server gesetzt.
+# Der 'cd'-Befehl ist nicht mehr nötig und wird entfernt.
 
 : "${STEAM_USER:?Bitte gib einen Steam-Benutzernamen in den Server-Startvariablen an.}"
 : "${STEAM_PASS:?Bitte gib ein Steam-Passwort in den Server-Startvariablen an.}"
@@ -11,7 +12,8 @@ echo "Installiere/Aktualisiere den SCUM Server mit dem Account: ${STEAM_USER}"
 echo "Verwende STABILE App-ID: 1824900"
 echo "========================================="
 
-# Der Pfad zu steamcmd.sh ist in diesem Image anders
+# Der Pfad zu steamcmd.sh und zum Installationsverzeichnis sind in diesem Image anders
+# Wir sind bereits im richtigen Verzeichnis, daher reicht der relative Pfad.
 ./steamcmd.sh \
     +@sSteamCmdForcePlatformType linux \
     +force_install_dir "/home/steam/server" \
@@ -29,7 +31,10 @@ mkdir -p ./SCUM/Saved/Config/WindowsServer
 
 echo "========================================="
 echo "Server IP: ${SERVER_IP}"
-# ... (Rest des Skripts bleibt gleich) ...
+echo "Server Port: ${SERVER_PORT}"
+echo "Query Port: ${QUERY_PORT}"
+echo "Max Players: ${MAX_PLAYERS}"
+echo "Zusätzliche Argumente: ${ADDITIONAL_ARGS}"
 echo "========================================="
 
 echo "Starte SCUMServer.exe..."
