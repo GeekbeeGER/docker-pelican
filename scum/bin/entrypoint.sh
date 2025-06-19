@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-cd /mnt/server
+# Das Arbeitsverzeichnis ist bereits /home/steam/server
 
 : "${STEAM_USER:?Bitte gib einen Steam-Benutzernamen in den Server-Startvariablen an.}"
 : "${STEAM_PASS:?Bitte gib ein Steam-Passwort in den Server-Startvariablen an.}"
@@ -9,26 +9,15 @@ cd /mnt/server
 echo "========================================="
 echo "Installiere/Aktualisiere den SCUM Server mit dem Account: ${STEAM_USER}"
 echo "Verwende STABILE App-ID: 1824900"
-echo "Erzwinge Linux-Plattform für SteamCMD."
 echo "========================================="
 
-# FÜGE @sSteamCmdForcePlatformType HINZU, UM BEKANNTE BUGS ZU UMGEHEN
-# Leite stdout und stderr in eine Log-Datei um, um mehr Details zu sehen
-/opt/steamcmd/steamcmd.sh \
+# Der Pfad zu steamcmd.sh ist in diesem Image anders
+./steamcmd.sh \
     +@sSteamCmdForcePlatformType linux \
-    +force_install_dir /mnt/server \
+    +force_install_dir "/home/steam/server" \
     +login "${STEAM_USER}" "${STEAM_PASS}" \
     +app_update 1824900 validate \
-    +quit > /tmp/steamcmd_output.log 2>&1
-
-# Gib den Inhalt der Log-Datei aus, um Fehler zu sehen
-cat /tmp/steamcmd_output.log
-
-# Überprüfe den Exit-Code von SteamCMD (optional, aber gut für die Fehlersuche)
-if [ $? -ne 0 ]; then
-    echo "SteamCMD ist mit einem Fehler fehlgeschlagen. Siehe Log oben."
-    exit 1
-fi
+    +quit
 
 mkdir -p ./SCUM/Saved/Config/WindowsServer
 
@@ -40,10 +29,7 @@ mkdir -p ./SCUM/Saved/Config/WindowsServer
 
 echo "========================================="
 echo "Server IP: ${SERVER_IP}"
-echo "Server Port: ${SERVER_PORT}"
-echo "Query Port: ${QUERY_PORT}"
-echo "Max Players: ${MAX_PLAYERS}"
-echo "Zusätzliche Argumente: ${ADDITIONAL_ARGS}"
+# ... (Rest des Skripts bleibt gleich) ...
 echo "========================================="
 
 echo "Starte SCUMServer.exe..."
