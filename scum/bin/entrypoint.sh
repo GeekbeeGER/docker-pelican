@@ -9,9 +9,26 @@ cd /mnt/server
 echo "========================================="
 echo "Installiere/Aktualisiere den SCUM Server mit dem Account: ${STEAM_USER}"
 echo "Verwende STABILE App-ID: 1824900"
+echo "Erzwinge Linux-Plattform für SteamCMD."
 echo "========================================="
-# HIER IST DIE STABILE, EMPFOHLENE APP-ID:
-/opt/steamcmd/steamcmd.sh +force_install_dir /mnt/server +login "${STEAM_USER}" "${STEAM_PASS}" +app_update 1824900 validate +quit
+
+# FÜGE @sSteamCmdForcePlatformType HINZU, UM BEKANNTE BUGS ZU UMGEHEN
+# Leite stdout und stderr in eine Log-Datei um, um mehr Details zu sehen
+/opt/steamcmd/steamcmd.sh \
+    +@sSteamCmdForcePlatformType linux \
+    +force_install_dir /mnt/server \
+    +login "${STEAM_USER}" "${STEAM_PASS}" \
+    +app_update 1824900 validate \
+    +quit > /tmp/steamcmd_output.log 2>&1
+
+# Gib den Inhalt der Log-Datei aus, um Fehler zu sehen
+cat /tmp/steamcmd_output.log
+
+# Überprüfe den Exit-Code von SteamCMD (optional, aber gut für die Fehlersuche)
+if [ $? -ne 0 ]; then
+    echo "SteamCMD ist mit einem Fehler fehlgeschlagen. Siehe Log oben."
+    exit 1
+fi
 
 mkdir -p ./SCUM/Saved/Config/WindowsServer
 
