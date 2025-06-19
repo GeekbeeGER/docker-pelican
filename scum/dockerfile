@@ -1,46 +1,31 @@
-# VERSUCH 1: WECHSEL DES BASIS-IMAGES ZU UBUNTU 22.04
-FROM ubuntu:22.04
+# VERSUCH 2: VERWENDUNG EINES VORGEFERTIGTEN STEAMCMD-IMAGES
+FROM cm2network/steamcmd:latest
 
 # Setze Umgebungsvariablen
-ENV DEBIAN_FRONTEND=noninteractive
 ENV WINEARCH=win64
-ENV WINEPREFIX=/mnt/server/.wine
+ENV WINEPREFIX=/home/steam/server/.wine
 
 # --- SETUP ALS ROOT-BENUTZER ---
+USER root
 
-# Installiere notwendige Pakete unter Ubuntu
-RUN dpkg --add-architecture i386 && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-        wget \
-        ca-certificates \
-        tar \
-        xz-utils \
-        wine64 \
-        lib32gcc-s1 && \
+# Installiere Wine64 (steamcmd ist schon da)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends wine64 && \
     rm -rf /var/lib/apt/lists/*
 
-# Erstelle den non-root-Benutzer 'container' UND sein Home-Verzeichnis mit '-m'
-RUN useradd --system -m --home /home/container --shell /bin/bash container
+# Der Benutzer 'steam' und sein Home-Verzeichnis '/home/steam' werden vom Basis-Image bereitgestellt.
+# Wir müssen nur das Server-Verzeichnis erstellen.
+RUN mkdir -p /home/steam/server && \
+    chown -R steam:steam /home/steam/server
 
-# Installiere SteamCMD
-RUN mkdir -p /opt/steamcmd && \
-    cd /opt/steamcmd && \
-    wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar xvz
-
-# Erstelle die Verzeichnisse, die SteamCMD und der Server benötigen
-RUN mkdir -p /mnt/server /home/container/Steam && \
-    chown -R container:container /home/container
-
-# Kopiere das Startskript in den Container
-COPY bin/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-# Setze die finalen Berechtigungen für alle wichtigen Ordner
-RUN chown -R container:container /opt/steamcmd /mnt/server
+# Kopiere das Startskript. Wichtig: Der Pfad muss für den 'steam'-Benutzer zugänglich sein.
+COPY bin/entrypoint.sh /home/steam/entrypoint.sh
+RUN chown steam:steam /home/steam/entrypoint.sh && \
+    chmod +x /home/steam/entrypoint.sh
 
 # --- WECHSEL ZUM EINGESCHRÄNKTEN BENUTZER ---
+USER steam
+WORKDIR /home/steam/server
 
-USER container
-WORKDIR /mnt/server
-ENTRYPOINT ["/entrypoint.sh"]
+# Definiere den Entrypoint. Der Pfad muss angepasst werden.
+ENTRYPOINT ["/home/steam/entrypoint.sh"]
