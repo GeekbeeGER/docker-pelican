@@ -1,20 +1,29 @@
-# ... (andere Befehle) ...
+# HIER IST DIE FEHLENDE ZEILE:
+FROM cm2network/steamcmd:latest
 
 # --- SETUP ALS ROOT-BENUTZER ---
 USER root
 
-# Installiere Wine64 UND Winetricks
+# Installiere Wine64
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends wine64 winetricks && \
+    apt-get install -y --no-install-recommends wine64 && \
     rm -rf /var/lib/apt/lists/*
 
-# ... (useradd, mkdir etc.) ...
+# Erstelle unseren eigenen 'container'-Benutzer, mit dem Pelican besser umgehen kann
+RUN useradd --system -m --home /home/container --shell /bin/bash container
+
+# Erstelle das Server-Verzeichnis für unseren neuen Benutzer
+RUN mkdir -p /home/container/server
+
+# Kopiere das Startskript
+COPY bin/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Setze die finalen Berechtigungen. Der 'container'-Benutzer muss SteamCMD ausführen dürfen.
+RUN chown -R container:container /home/container /home/steam /entrypoint.sh
 
 # --- WECHSEL ZUM EINGESCHRÄNKTEN BENUTZER ---
 USER container
-
-# Führe Winetricks als der richtige Benutzer aus, um die Runtimes zu installieren
-RUN winetricks -q vcrun2019 # Oder vcrun2022, je nach Fehler
-
 WORKDIR /home/container/server
+
 ENTRYPOINT ["/entrypoint.sh"]
