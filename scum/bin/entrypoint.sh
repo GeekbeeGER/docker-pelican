@@ -18,7 +18,7 @@ echo "========================================="
     +@sSteamCmdForcePlatformType linux \
     +force_install_dir "/home/steam/server" \
     +login "${STEAM_USER}" "${STEAM_PASS}" \
-    +app_update 1824900 validate \
+    +app_update 3792580 validate \
     +quit
 
 mkdir -p ./SCUM/Saved/Config/WindowsServer
